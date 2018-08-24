@@ -91,12 +91,12 @@ public class BlockParser {
                 rawBlock.getHash(),
                 rawBlock.getPreviousBlockHash());
 
-        if (isBlockNotAlreadyAdded(rawBlock)) {
-            bsqStateService.onNewBlockWithEmptyTxs(block);
-        } else {
+        if (isBlockAlreadyAdded(rawBlock)) {
             //TODO check how/if that can happen
             log.warn("Block was already added.");
             DevEnv.logErrorAndThrowIfDevMode("Block was already added. rawBlock=" + rawBlock);
+        } else {
+            bsqStateService.onNewBlockWithEmptyTxs(block);
         }
 
         // Worst case is that all txs in a block are depending on another, so only one get resolved at each iteration.
@@ -108,13 +108,12 @@ public class BlockParser {
         long startTs = System.currentTimeMillis();
         List<Tx> txList = block.getTxs();
 
-        rawBlock.getRawTxs().forEach(rawTx -> {
+        rawBlock.getRawTxs().forEach(rawTx ->
             txParser.findTx(rawTx,
                     genesisTxId,
                     genesisBlockHeight,
                     genesisTotalSupply)
-                    .ifPresent(txList::add);
-        });
+                    .ifPresent(txList::add));
         log.debug("parseBsqTxs took {} ms", rawBlock.getRawTxs().size(), System.currentTimeMillis() - startTs);
 
         bsqStateService.onParseBlockComplete(block);
@@ -135,8 +134,8 @@ public class BlockParser {
         }
     }
 
-    private boolean isBlockNotAlreadyAdded(RawBlock rawBlock) {
-        return !bsqStateService.getBlockAtHeight(rawBlock.getHeight()).isPresent();
+    private boolean isBlockAlreadyAdded(RawBlock rawBlock) {
+        return bsqStateService.isBlockHashKnown(rawBlock.getHash());
     }
 
     private boolean isBlockConnecting(RawBlock rawBlock, LinkedList<Block> blocks) {
