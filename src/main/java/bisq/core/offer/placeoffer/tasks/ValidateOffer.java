@@ -99,6 +99,8 @@ public class ValidateOffer extends Task<PlaceOfferModel> {
             // TODO check upper and lower bounds for fiat
             // TODO check rest of new parameters
 
+            // TODO check for account age witness base tradeLimit is missing
+
             complete();
         } catch (Exception e) {
             offer.setErrorMessage("An error occurred.\n" +
